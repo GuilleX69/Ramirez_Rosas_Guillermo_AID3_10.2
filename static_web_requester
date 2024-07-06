@@ -1,0 +1,102 @@
+from flask import Flask, render_template_string, request
+import subprocess
+
+app = Flask(__name__)
+
+# Function to execute ping command
+def execute_ping():
+    result = subprocess.run(['ping', '-c', '4', '8.8.8.8'], capture_output=True, text=True)
+    return result.stdout
+
+# Function to execute curl command
+def execute_curl():
+    result = subprocess.run(['curl', 'http://192.168.137.192:6969/ansible_ping'], capture_output=True, text=True)
+    return result.stdout
+
+# Define route for home page
+@app.route('/')
+def home():
+    # Render initial HTML template
+    return render_template_string("""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Command Outputs</title>
+        <style>
+            body {
+                background-color: black;
+                color: #00ff00; /* Green text */
+                font-family: 'Courier New', Courier, monospace;
+            }
+            button {
+                background-color: #00ff00; /* Green button */
+                color: black;
+                border: none;
+                padding: 10px 20px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+                margin: 4px 2px;
+                cursor: pointer;
+                border-radius: 4px;
+            }
+            pre {
+                background-color: #000;
+                color: #00ff00; /* Green text */
+                padding: 10px;
+                border-radius: 4px;
+            }
+        </style>
+        <script>
+            function executePing() {
+                fetch('/ping')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('ping-output').innerText = data;
+                });
+            }
+
+            function executeCurl() {
+                fetch('/curl')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('curl-output').innerText = data;
+                });
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Command Outputs</h1>
+        <section>
+            <h2>Prueba de Ping</h2>
+            <pre id="ping-output"></pre>
+            <button onclick="executePing();">Execute Ping</button>
+        </section>
+        <section>
+            <h2>ejecutar Ansible ping </h2>
+            <pre id="curl-output"></pre>
+            <button onclick="executeCurl();">Execute Curl</button>
+        </section>
+    </body>
+    </html>
+    """)
+
+# Define route for executing ping command
+@app.route('/ping')
+def ping():
+    # Execute ping command and return output
+    ping_output = execute_ping()
+    return ping_output
+
+# Define route for executing curl command
+@app.route('/curl')
+def curl():
+    # Execute curl command and return output
+    curl_output = execute_curl()
+    return curl_output
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
